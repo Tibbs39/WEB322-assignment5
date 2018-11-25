@@ -1,39 +1,47 @@
+.btn-info {
+    color: #fff;
+    background-color: #630000;
+    border-color: #630000;
+}
+.btn-info:focus,
+.btn-info.focus {
+    color: #fff;
+    background-color: #800000;
+    border-color: #800000;
+}
+.btn-info:hover {
+    color: #fff;
+    background-color: #800000;
+    border-color: #800000;
+}
 .navbar-default {
     background-color: #700000;
     border-color: #700000;
     border-bottom-color: #333;
 }
-
 .navbar-default .navbar-nav > .active > a,
 .navbar-default .navbar-nav > .active > a:focus, 
 .navbar-default .navbar-nav > .active > a:hover {
 	background-color: #7a1f1f;
     color: hotpink;
 }
-
 .navbar-default .navbar-nav > li > a:focus, 
 .navbar-default .navbar-nav > li > a:hover {
     color: hotpink;
 }
-
 .navbar-default .navbar-nav > li > a {
 	color: white;
 }
-
-
 .navbar-default .navbar-brand {
     color: white;
 }
-
 .navbar-default .navbar-brand:focus, .navbar-default .navbar-brand:hover {
 	color: hotpink;
 	background-color: transparent;
 }
-
 legend {
     color: white;
 }
-
 body {
     color: white;
     background: #333;
