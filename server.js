@@ -7,7 +7,7 @@
 *  
 *  Name:         Kenneth Yue 
 *  Student ID:   1227932176 
-*  Date:         November 12, 2018 
+*  Date:         November 24, 2018 
 * 
 *  Online (Heroku) URL: https://serene-sands-79834.herokuapp.com/
 * 
@@ -75,13 +75,11 @@ app.use(function(req,res,next) {
 
 // setting up default route
 app.get("/", function(req,res) {
-    //res.sendFile(path.join(__dirname,"/views/home.html"));
     res.render('home');
 });
 
 // setting up route for /about
 app.get("/about", function(req,res) {
-    //res.sendFile(path.join(__dirname,"/views/about.html"));
     res.render('about');
 });
 
@@ -112,8 +110,9 @@ app.get("/employees", function(req,res) {
 
 // setting up route for /employees/add
 app.get("/employees/add", function(req,res) {
-    //res.sendFile(path.join(__dirname,"/views/addEmployee.html"));
-    res.render('addEmployee');
+    service.getDepartments()
+    .then((value) => res.render('addEmployee', {departments: value}))
+    .catch((err) => res.render('addEmployee', {message: err}));
 });
 
 app.post("/employees/add", function(req,res) {
@@ -127,37 +126,49 @@ app.get("/employee/:employeeNum", function(req,res) {
         // redirect if number is invalid
         res.redirect("/employees");    
     } else {
+
+        let data = {};
+
         service.getEmployeesByNum(req.params.employeeNum)
         .then(function(value) {
-            res.render('employee', {employee: value});
+            if (value) { 
+                data.employee = value;
+                service.getDepartments().then(function(value) {
+                    data.departments = value;
+                    for (let i = 0; i < data.departments.length; ++i) {
+                        if (data.departments[i].departmentId == data.employee.department) {
+                            data.departments[i].selected = true;
+                            break;
+                        }
+                    }
+                }).catch(() => { data.departments = []; })
+                .then(() => { res.render('employee', { data: data }); });
+            }
         })
         .catch(function(err) {
-            res.render('employee', {message: err});
+            res.status(404).render('employee', {message: "404: " + err});
         });
     }
 });
 
 // updating employees
 app.post("/employee/update", (req, res) => {
-    service.updateEmployee(req.body).then(res.redirect("/employees"));
+    service.updateEmployee(req.body)
+    .then(() => res.redirect("/employees"))
+    .catch((err) => { res.status(500).render('employee', {message: "500: " + err}); });
 });
 
-// route for /managers
-// depreciated
-/* app.get("/managers", function(req,res) {
-    service.getManagers()
-    .then(function(value) {
-        res.json(value);
-    })
-    .catch(function(err) {
-        res.json({message: err});
-    });
-}); */
+app.get("/employees/delete/:empNum", function(req,res) {
+    service.deleteEmployeeByNum(req.params.empNum)
+    .then(() => res.redirect("/employees"))
+    .catch(() => { res.status(500).render('employee', {message: "500: Unable to Delete Employee"}); });
+});
 
 // route for /departments
 app.get("/departments", function(req,res) {
     service.getDepartments()
     .then(function(value) {
+        console.log(value);
         res.render('departments', {departments: value});
     })
     .catch(function(err) {
@@ -165,9 +176,41 @@ app.get("/departments", function(req,res) {
     });
 });
 
+// route for /departments
+app.get("/departments/add", function(req,res) {
+    res.render('addDepartment');
+});
+
+app.post("/departments/add", function(req,res) {
+    service.addDepartment(req.body).then(res.redirect('/departments'));
+});
+
+app.post("/department/update", function(req,res) {
+    service.updateDepartment(req.body).then(res.redirect('/departments'));
+});
+
+app.get("/department/:departmentId", function(req,res) {
+    service.getDepartmentById(req.params.departmentId)
+    .then(function(value) {
+        res.render('department', {department: value});
+    })
+    .catch(function(err) {
+        res.status(404).render('department', {message: "404: " + err});
+    });
+});
+
+app.get("/departments/delete/:departmentId", function(req,res) {
+    service.deleteDepartmentById(req.params.departmentId)
+    .then(function() {
+        res.redirect("/departments");
+    })
+    .catch(function(err) {
+        res.status(500).render('department', {message: err});
+    });
+})
+
 // setting up route for /images/add
 app.get("/images/add", function(req,res) {
-    //res.sendFile(path.join(__dirname,"/views/addImage.html"));
     res.render('addImage');
 });
 
@@ -186,7 +229,7 @@ app.get("/images", function(req,res) {
 
 // 404 message
 app.use(function(req,res,next) {
-    res.status(404).send('404: Page not found');
+    res.status(404).render('fourohfour');
 });
 
 // setup listen
