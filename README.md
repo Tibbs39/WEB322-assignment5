@@ -1,9 +1,9 @@
-# WEB322 - Assignment 4
+# WEB322 - Assignment 5
 
 This webapp was uploaded to heroku and can be viewed here: [https://serene-sands-79834.herokuapp.com/](https://serene-sands-79834.herokuapp.com/)
 
-In this assignment we implemented Handlebars to our HTML pages. This allows for dynamic rendering of HTML. 
-All queries now render HTML instead of returning stringified JSON. All pages were updated to use Handlebars.
+In this assignment attached a database to our app, using sequelize.js and PostgreSQL. 
+All queries make calls to the tables in PostgreSQL to make any CRUD operations.
 
 The following queries are available:
 ```

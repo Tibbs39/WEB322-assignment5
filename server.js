@@ -1,19 +1,20 @@
 /*****************************************************************************
-*  WEB322 – Assignment 4
+*  WEB322 – Assignment 6
 *  I declare that this assignment is my own work in accordance with Seneca 
 *  Academic Policy. No part of this assignment has been copied manually or 
 *  electronically from any other source (including web sites) or distributed 
 *  to other students. 
 *  
 *  Name:         Kenneth Yue 
-*  Student ID:   1227932176 
-*  Date:         November 24, 2018 
+*  Student ID:   127932176 
+*  Date:         December 7, 2018 
 * 
 *  Online (Heroku) URL: https://serene-sands-79834.herokuapp.com/
 * 
 *****************************************************************************/  
 
 const service = require('./data-service.js')
+const serviceAuth = require('./data-service-auth.js')
 const express = require("express");
 const app = express();
 const path = require("path");
@@ -21,6 +22,7 @@ const fs = require('fs');
 const multer = require("multer");
 const bodyParser = require('body-parser');
 const exphbs = require('express-handlebars');
+const clientSessions = require("client-sessions");
 
 const HTTP_PORT = process.env.PORT || 8080;
 
@@ -66,12 +68,34 @@ app.engine('.hbs', exphbs({
 }));
 app.set('view engine', '.hbs');
 
+// client sessions
+app.use(clientSessions({
+    cookieName: "session", 
+    secret: "this_is_some_super_secret_string_for_web322_assignment6", 
+    duration: 2 * 60 * 1000, // 2 minutes
+    activeDuration: 1000 * 60 // 1 minute
+}));
+
+app.use(function(req, res, next) {
+    res.locals.session = req.session;
+    next();
+});
+
 // add middleware for the helper function
 app.use(function(req,res,next) {
     let route = req.baseUrl + req.path;
     app.locals.activeRoute = (route == "/") ? "/" : route.replace(/\/$/, "");
     next();
 });
+
+// middleware function to check if the user is logged in
+function ensureLogin(req, res, next) {
+    if (!req.session.user) {
+        res.redirect("/login");
+    } else {
+        next();
+    }
+}
 
 // setting up default route
 app.get("/", function(req,res) {
@@ -84,7 +108,7 @@ app.get("/about", function(req,res) {
 });
 
 // route for /employees
-app.get("/employees", function(req,res) {
+app.get("/employees", ensureLogin, function(req,res) {
     // if /employees?status
     if (req.query.status) {
         service.getEmployeesByStatus(req.query.status)
@@ -109,18 +133,21 @@ app.get("/employees", function(req,res) {
 });
 
 // setting up route for /employees/add
-app.get("/employees/add", function(req,res) {
+app.get("/employees/add", ensureLogin, function(req,res) {
     service.getDepartments()
     .then((value) => res.render('addEmployee', {departments: value}))
-    .catch((err) => res.render('addEmployee', {message: err}));
+    .catch(() => res.render('addEmployee', {departments: null}));
 });
 
-app.post("/employees/add", function(req,res) {
-    service.addEmployee(req.body).then(res.redirect('/employees'));
+// post for adding employees
+app.post("/employees/add", ensureLogin, function(req,res) {
+    service.addEmployee(req.body)
+    .then(() => res.redirect('/employees'))
+    .catch(() => res.status(500).render('employees', {message: "500: Unable to Add Employee"}));
 });
 
 // route for /employee/:employeeNum
-app.get("/employee/:employeeNum", function(req,res) {
+app.get("/employee/:employeeNum", ensureLogin, function(req,res) {
     // parse if employeeNum is a number
     if (isNaN(req.params.employeeNum)) {
         // redirect if number is invalid
@@ -142,54 +169,56 @@ app.get("/employee/:employeeNum", function(req,res) {
                         }
                     }
                 }).catch(() => { data.departments = []; })
-                .then(() => { res.render('employee', { data: data }); });
+                .then(() => res.render('employee', { data: data }));
             }
         })
-        .catch(function(err) {
-            res.status(404).render('employee', {message: "404: " + err});
+        .catch(function() {
+            res.status(404).render('employee', {message: "404: Employee not found"});
         });
     }
 });
 
 // updating employees
-app.post("/employee/update", (req, res) => {
+app.post("/employee/update", ensureLogin, (req, res) => {
     service.updateEmployee(req.body)
     .then(() => res.redirect("/employees"))
-    .catch((err) => { res.status(500).render('employee', {message: "500: " + err}); });
+    .catch(() => { res.status(500).render('employee', {message: "500: Unable to Update Employee"}); });
 });
 
-app.get("/employees/delete/:empNum", function(req,res) {
+app.get("/employees/delete/:empNum", ensureLogin, function(req,res) {
     service.deleteEmployeeByNum(req.params.empNum)
     .then(() => res.redirect("/employees"))
     .catch(() => { res.status(500).render('employee', {message: "500: Unable to Delete Employee"}); });
 });
 
 // route for /departments
-app.get("/departments", function(req,res) {
+app.get("/departments", ensureLogin, function(req,res) {
     service.getDepartments()
-    .then(function(value) {
-        console.log(value);
-        res.render('departments', {departments: value});
-    })
-    .catch(function(err) {
-        res.render('departments', {message: err});
-    });
+    .then((value) => res.render('departments', {departments: value}))
+    .catch((err) => res.render('departments', {message: err}));
 });
 
-// route for /departments
-app.get("/departments/add", function(req,res) {
+// route for /departments/add
+app.get("/departments/add", ensureLogin, function(req,res) {
     res.render('addDepartment');
 });
 
-app.post("/departments/add", function(req,res) {
-    service.addDepartment(req.body).then(res.redirect('/departments'));
+// post for adding departments
+app.post("/departments/add", ensureLogin, function(req,res) {
+    service.addDepartment(req.body)
+    .then(() => { res.redirect('/departments') })
+    .catch(() => { res.status(500).render('departments', {message: "500: Unable to Add Department"}); });
 });
 
-app.post("/department/update", function(req,res) {
-    service.updateDepartment(req.body).then(res.redirect('/departments'));
+// post for updating departments
+app.post("/department/update", ensureLogin, function(req,res) {
+    service.updateDepartment(req.body)
+    .then(() => { res.redirect('/departments') })
+    .catch(() => { res.status(500).render('departments', {message: "500: Unable to Update Department"}); });
 });
 
-app.get("/department/:departmentId", function(req,res) {
+// get for editing departments
+app.get("/department/:departmentId", ensureLogin, function(req,res) {
     service.getDepartmentById(req.params.departmentId)
     .then(function(value) {
         res.render('department', {department: value});
@@ -199,7 +228,7 @@ app.get("/department/:departmentId", function(req,res) {
     });
 });
 
-app.get("/departments/delete/:departmentId", function(req,res) {
+app.get("/departments/delete/:departmentId", ensureLogin, function(req,res) {
     service.deleteDepartmentById(req.params.departmentId)
     .then(function() {
         res.redirect("/departments");
@@ -210,22 +239,70 @@ app.get("/departments/delete/:departmentId", function(req,res) {
 })
 
 // setting up route for /images/add
-app.get("/images/add", function(req,res) {
+app.get("/images/add", ensureLogin, function(req,res) {
     res.render('addImage');
 });
 
-app.post("/images/add", upload.single("imageFile"), function(req, res) {
+app.post("/images/add", ensureLogin, upload.single("imageFile"), function(req, res) {
     res.redirect('/images');
 });
 
 // route for /images
-app.get("/images", function(req,res) {
+app.get("/images", ensureLogin, function(req,res) {
     // read directory
     fs.readdir(path.join(__dirname,"/public/images/uploaded"), 
     function(err, items) {
             res.render('images', {images: items});
     });
 });
+
+// route for login page
+app.get("/login", function(req, res) {
+    res.render('login');
+});
+
+// route for registration page
+app.get("/register", function(req, res) { 
+    res.render('register');
+});
+
+// post for /register
+app.post("/register", function(req, res) {
+    serviceAuth.registerUser(req.body)
+    .then(() => res.render('register', { successMsg: "User created"}))
+    .catch((err) => res.render('register', { errorMsg: err, userName: req.body.userName }));
+});
+
+// post for /login
+app.post("/login", function(req, res) {
+    req.body.userAgent = req.get('User-Agent');
+
+    serviceAuth.checkUser(req.body)
+    .then(function(user) { 
+        req.session.user = {
+            userName: user.userName,
+            email: user.email,
+            loginHistory: user.loginHistory
+        }
+
+        res.redirect('/employees');
+    })
+    .catch(function(err) {
+        console.log(err);
+        res.render('login', { errorMsg: err, userName: req.body.userName });
+    });
+});
+
+// loggin' out
+app.get("/logout", function(req, res) {
+    req.session.reset();
+    res.redirect('/');
+});
+
+// user history
+app.get("/userHistory", ensureLogin, function (req, res) {
+    res.render('userHistory');
+}); 
 
 // 404 message
 app.use(function(req,res,next) {
@@ -234,6 +311,7 @@ app.use(function(req,res,next) {
 
 // setup listen
 service.initialize()
+.then(serviceAuth.initialize)
 .then(function(msg) {
     console.log(msg);
     app.listen(HTTP_PORT);

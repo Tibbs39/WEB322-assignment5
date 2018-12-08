@@ -1,13 +1,13 @@
 /*****************************************************************************
-*  WEB322 – Assignment 4
+*  WEB322 – Assignment 6
 *  I declare that this assignment is my own work in accordance with Seneca 
 *  Academic Policy. No part of this assignment has been copied manually or 
 *  electronically from any other source (including web sites) or distributed 
 *  to other students. 
 *  
 *  Name:         Kenneth Yue 
-*  Student ID:   1227932176 
-*  Date:         November 24, 2018 
+*  Student ID:   127932176 
+*  Date:         December 7, 2018 
 * 
 *  Online (Heroku) URL: https://murmuring-journey-73431.herokuapp.com/
 * 
@@ -281,10 +281,10 @@ module.exports = {
         return new Promise(function (resolve, reject) {
             Department.create({
                 departmentName: departmentData.departmentName
-            }).then(function(){ 
+            }).then(function() { 
                 console.log("New department created!");
                 resolve();
-            }).catch(function(){
+            }).catch(function() {
                 console.log("Unable to create new department!");
                 reject();
             });
