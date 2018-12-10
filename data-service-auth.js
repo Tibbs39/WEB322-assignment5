@@ -35,7 +35,7 @@ let User; // do be defined in intialize function
 module.exports = {
     initialize: function () {
         return new Promise(function (resolve, reject) {
-            let db = mongoose.createConnection("mongodb://kyue3:ThisIsMongoDB1@ds121373.mlab.com:21373/web322_a6");
+            let db = mongoose.createConnection("mongodb://kyue3:ThisIsMongoDB1@ds121373.mlab.com:21373/web322_a6", { useNewUrlParser: true });
             
             db.on('error', (err) => {
                 reject(err); // reject the promise with the provided error
@@ -58,10 +58,12 @@ module.exports = {
                     userData.password = hash;
                     let newUser = new User(userData);
                     newUser.save(function(err) {
-                        if (err.code == 11000) {
-                            reject("User Name already taken");
-                        } else if (err) {
-                            reject("There was an error creating the user: " + err);
+                        if (err) {
+                            if (err.code == 11000) {
+                                reject("User Name already taken");
+                            } else {
+                                reject("There was an error creating the user: " + err);
+                            }
                         } else {
                             resolve();
                         }
@@ -78,7 +80,7 @@ module.exports = {
             User.find({ userName: userData.userName }).exec()
             .then((users) => {
                 if (users.length == 0) {
-                    reject("Unable to find user: " + userData.userName);
+                    reject("Unable to find username: " + userData.userName);
                 } else {
                     bcrypt.compare(userData.password, users[0].password, function (err, res) {
                         if (res === true) {
@@ -98,10 +100,10 @@ module.exports = {
                                 resolve(users[0]);
                             })
                             .catch(function(err) { 
-                                reject("There was an error verifying the user: " + err);
+                                reject("There was an error verifying the username: " + err);
                             });
                         } else if (res === false) {
-                            reject("Incorrect password for user: " + userData.userName);
+                            reject("Unable to find username: " + userData.userName);
                         }
                     });
                 }
