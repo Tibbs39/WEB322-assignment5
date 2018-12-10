@@ -269,7 +269,7 @@ app.get("/register", function(req, res) {
 // post for /register
 app.post("/register", function(req, res) {
     serviceAuth.registerUser(req.body)
-    .then(() => res.render('register', { successMsg: "User created"}))
+    .then(() => res.render('register', { successMsg: "User created!"}))
     .catch((err) => res.render('register', { errorMsg: err, userName: req.body.userName }));
 });
 
