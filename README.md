@@ -1,9 +1,15 @@
-# WEB322 - Assignment 5
+# WEB322 - Assignment 6
 
-This webapp was uploaded to heroku and can be viewed here: [https://serene-sands-79834.herokuapp.com/](https://serene-sands-79834.herokuapp.com/)
+This webapp was uploaded to heroku and can be viewed here: [https://young-mesa-30101.herokuapp.com/](https://young-mesa-30101.herokuapp.com/)
 
 In this assignment attached a database to our app, using sequelize.js and PostgreSQL. 
 All queries make calls to the tables in PostgreSQL to make any CRUD operations.
+In addition, a MongoDB database was attached for users accounts. You can must create an account and login in order to view the employees. 
+Alternatively you can login with the following to view the app.
+
+Username: test
+
+Password: 123
 
 The following queries are available:
 ```
