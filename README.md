@@ -4,12 +4,10 @@ This webapp was uploaded to heroku and can be viewed here: [https://young-mesa-3
 
 In this assignment attached a database to our app, using sequelize.js and PostgreSQL. 
 All queries make calls to the tables in PostgreSQL to make any CRUD operations.
-In addition, a MongoDB database was attached for users accounts. You can must create an account and login in order to view the employees. 
+In addition, a MongoDB database was attached for storing users accounts. You can must create an account and login in order to view the employees. 
 Alternatively you can login with the following to view the app.
 
-Username: test
-
-Password: 123
+Username: test  Password: 123
 
 The following queries are available:
 ```
